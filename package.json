@@ -9,5 +9,8 @@
     "serve": "honkit serve"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "honkit": "^4.0.7"
+  }
 }
