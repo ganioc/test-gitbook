@@ -1,5 +1,7 @@
 # 目录 
 
+
+* [介绍](README.md)
 * [第1章](chap-1/README.md)
 * [tech notes](tech-notes/README.md)
 #	* [Introduction](README.md)
