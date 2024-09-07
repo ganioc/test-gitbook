@@ -1,0 +1,469 @@
+
+<!DOCTYPE HTML>
+<html lang="zh_cn" >
+    <head>
+        <meta charset="UTF-8">
+        <title>RK3568 boot · 书</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 4.0.8">
+        <meta name="author" content="yango">
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="libsrt.html" />
+    
+    
+    <link rel="prev" href="./" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../chap-1/">
+            
+                <a href="../chap-1/">
+            
+                    
+                    第1章
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    tech notes
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter active" data-level="1.3.1" data-path="rk3568_boot.html">
+            
+                <a href="rk3568_boot.html">
+            
+                    
+                    RK3568 boot
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.2" data-path="libsrt.html">
+            
+                <a href="libsrt.html">
+            
+                    
+                    libsrt
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.3" data-path="gio_http.html">
+            
+                <a href="gio_http.html">
+            
+                    
+                    GIO socket programming
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >RK3568 boot</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="intro">Intro</h2>
+<p>添加RK3568的boot启动分区，这样通过修改boot文件系统上的kernel,dtb文件，就可以达到升级系统的目的。</p>
+<p>根据Rockchip的文档SDK/docs/common/Uboot/Rockchip_Developer_Guide_uboot_nextdev_CN.pdf, SDK中提供的u-boot默认支持distro模式，可以很好的支持文件系统启动。</p>
+<h2 id="rk3568-u-boot">RK3568 u-boot</h2>
+<p>u-boot使用CONFIG_BOOTCOMMAND，启动时会做设备检测,检测顺序为Android格式固件、RK FIT(Flat Image Tree)格式固件、RKP格式固件和文件系统格式固件。</p>
+<pre><code class="lang-c"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> RKIMG_BOOTCOMMAND            \
+    <span class="hljs-meta-string">"boot_android ${devtype} ${devnum};"</span>    \
+    <span class="hljs-meta-string">"boot_fit;"</span>                \
+    <span class="hljs-meta-string">"bootrkp;"</span>                \
+    <span class="hljs-meta-string">"run distro_bootcmd;"</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">endif</span></span>
+</code></pre>
+<p>将boot格式化为一个256MB的分区，拷贝kernel文件，dtb文件,并提供extlinux/extlinux.conf配置文件供u-boot读取。这样uboot启动时运行distro_bootcmd会自动检测到文件系统分区，并根据extlinux.conf文件加载设备树,启动kernel,加载rootfs分区，完成启动。</p>
+<h2 id="生成boot分区">生成boot分区</h2>
+<p>原来的packed update.img的分配格式如SDK/device/rockchip/rk356x/parameter.txt文件所示.</p>
+<pre><code class="lang-shell">
+
+
+FIRMWARE_VER: 1.0
+MACHINE_MODEL: RK3568
+MACHINE_ID: 007
+MANUFACTURER: RK3568
+MAGIC: 0x5041524B
+ATAG: 0x00200800
+MACHINE: 0xffffffff
+CHECK_MASK: 0x80
+PWR_HLD: 0,0,A,0,1
+TYPE: GPT
+CMDLINE: mtdparts=rk29xxnand:0x00002000@0x00004000(uboot),\
+0x00002000@0x00006000(misc),\
+0x00040000@0x00008000(boot:bootable),\
+0x00018000@0x00048000(recovery),\
+0x00008000@0x00060000(backup),\
+-@0x00068000(rootfs:grow)
+uuid:rootfs=614e0000-0000-4b53-8000-1d28000054a9
+</code></pre>
+<p>其中, CMDLINE的格式为 size@offset。boot部分为0x40000, 单位为sector, 512Btyes, 因此0x40000=2^18=256K, 256K*512=128MByte。</p>
+<p>这样预留给boot分区的空间就是128MB.</p>
+<h2 id="生成boot-image">生成boot image</h2>
+<p>这里借鉴了firefly RK3568 SDK的脚本文件。建立一个目录extboot/, 在目录下生成extlinux/extlinux.conf文件，将SDK/kernel/arch/arm64/boot/Image文件,SDK/kernel/arch/arm64/boot/dts/*.dtb文件拷贝进行。</p>
+<p>使用mkfs.ext4生成image,其中包含了extboot/目录下的内容。</p>
+<p>上述过程在build.sh脚本里添加函数模块，自动生成。</p>
+<pre><code class="lang-shell">
+rm -rf ${EXTBOOT_DIR} &amp;&amp; mkdir -p ${EXTBOOT_DIR}/extlinux
+
+KERNEL_VERSION=$(cat $TOP_DIR/kernel/include/config/kernel.release)
+echo "label rk-kernel.dtb linux-$KERNEL_VERSION" &gt; $EXTBOOT_DIR/extlinux/extlinux.conf
+
+cp ${TOP_DIR}/$RK_KERNEL_IMG $EXTBOOT_DIR/Image-$KERNEL_VERSION
+echo -e "\tkernel /Image-$KERNEL_VERSION" &gt;&gt; $EXTBOOT_DIR/extlinux/extlinux.conf
+
+cp ${TOP_DIR}/kernel/arch/${RK_ARCH}/boot/dts/rockchip/${RK_KERNEL_DTS}.dtb $EXTBOOT_DIR
+
+ln -sf ${RK_KERNEL_DTS}.dtb $EXTBOOT_DIR/rk-kernel.dtb
+
+echo -e "\tfdt /rk-kernel.dtb" &gt;&gt; $EXTBOOT_DIR/extlinux/extlinux.conf
+
+cp ${TOP_DIR}/kernel/.config $EXTBOOT_DIR/config-$KERNEL_VERSION
+cp ${TOP_DIR}/kernel/System.map $EXTBOOT_DIR/System.map-$KERNEL_VERSION
+
+make ARCH=$RK_ARCH INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$EXTBOOT_DIR modules_install
+
+EXTBOOT_IMG_SIZE=128M
+
+rm -rf $EXTBOOT_IMG &amp;&amp; truncate -s $EXTBOOT_IMG_SIZE $EXTBOOT_IMG
+fakeroot ${TOP_DIR}/device/rockchip/common/mkfs.ext4 -Fq -L "boot" -d $EXTBOOT_DIR $EXTBOOT_IMG
+</code></pre>
+<p>将生成的extboot.img作为新的boot.img打包进update.img</p>
+<h2 id="下载测试">下载测试</h2>
+<p>通过启动时的debug console看到uboot检测分区格式的过程，最终uboot通过distro command找到emmc0的boot分区，并加载kernel文件，进入正常启动。耗时&lt;1s。</p>
+<pre><code class="lang-shell">U-Boot 2017.09(u-boot commit id: 0f621b0e434b6944de865b517687e096930885b9)(sdk version: rk356x_linux_release_20230523_v1.3.2d.xml)-g0f621b0e43-dirty #ruff (Jun 01 2023 - 09:44:43 +0800)
+
+Model: Hummingbird Board
+PreSerial: 2, raw, 0xfe660000
+DRAM:  4 GiB
+Sysmem: init
+Relocation Offset: ed249000
+Relocation fdt: eb9f86a0 - eb9fecd8
+CR: M/C/I
+
+...
+
+
+Hit key to stop autoboot('CTRL+C'):  0 
+ANDROID: reboot reason: "(none)"
+optee api revision: 2.0
+TEEC: Waring: Could not find security partition
+Not AVB images, AVB skip
+No valid android hdr
+Android image load failed
+Android boot failed, error -1.
+<span class="hljs-meta">#</span><span class="bash"><span class="hljs-comment"># Booting FIT Image FIT: No fit blob</span></span>
+FIT: No FIT image
+<span class="hljs-meta">
+#</span><span class="bash"><span class="hljs-comment"># Booting Rockchip Format Image</span></span>
+Could not find kernel partition, ret=-1
+Card did not respond to voltage select!
+mmc_init: -95, time 10
+switch to partitions #0, OK
+mmc0(part 0) is current device
+Scanning mmc 0:3...
+Found /extlinux/extlinux.conf
+Retrieving file: /extlinux/extlinux.conf
+=================begin===================
+79 bytes read in 3 ms (25.4 KiB/s)
+1:    rk-kernel.dtb linux-4.19.219
+Retrieving file: /Image-4.19.219
+=================begin===================
+28135432 bytes read in 159 ms (168.8 MiB/s)
+Retrieving file: /rk-kernel.dtb
+=================begin===================
+121632 bytes read in 5 ms (23.2 MiB/s)
+Fdt Ramdisk skip relocation
+<span class="hljs-meta">#</span><span class="bash"><span class="hljs-comment"># Flattened Device Tree blob at 0x08300000</span></span>
+   Booting using the fdt blob at 0x08300000
+  'reserved-memory' ramoops@110000: addr=110000 size=f0000
+   Using Device Tree in place at 0000000008300000, end 0000000008320b1f
+No resource partition
+No file: logo_kernel.bmp
+** File not found logo.bmp **
+Adding bank: 0x00200000 - 0x08400000 (size: 0x08200000)
+Adding bank: 0x09400000 - 0xf0000000 (size: 0xe6c00000)
+Adding bank: 0x1f0000000 - 0x200000000 (size: 0x10000000)
+Total: 524.4 ms
+
+Starting kernel ...
+</code></pre>
+<p>加载并查看boot分区</p>
+<p><img src="img/rk3568-1.jpg" alt="terminal display"></img></p>
+<h2 id="结束">结束</h2>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="./" class="navigation navigation-prev " aria-label="Previous page: tech notes">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="libsrt.html" class="navigation navigation-next " aria-label="Next page: libsrt">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"RK3568 boot","level":"1.3.1","depth":2,"next":{"title":"libsrt","level":"1.3.2","depth":2,"path":"tech-notes/libsrt.md","ref":"tech-notes/libsrt.md","articles":[]},"previous":{"title":"tech notes","level":"1.3","depth":1,"path":"tech-notes/README.md","ref":"tech-notes/README.md","articles":[{"title":"RK3568 boot","level":"1.3.1","depth":2,"path":"tech-notes/rk3568_boot.md","ref":"tech-notes/rk3568_boot.md","articles":[]},{"title":"libsrt","level":"1.3.2","depth":2,"path":"tech-notes/libsrt.md","ref":"tech-notes/libsrt.md","articles":[]},{"title":"GIO socket programming","level":"1.3.3","depth":2,"path":"tech-notes/gio_http.md","ref":"tech-notes/gio_http.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":[],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","author":"yango","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"书","language":"zh_cn","gitbook":"*"},"file":{"path":"tech-notes/rk3568_boot.md","mtime":"2024-09-07T08:38:01.709Z","type":"markdown"},"gitbook":{"version":"4.0.8","time":"2024-09-07T09:37:18.960Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
