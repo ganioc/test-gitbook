@@ -1,6 +1,6 @@
 
 <!DOCTYPE HTML>
-<html lang="zh_cn" >
+<html lang="" >
     <head>
         <meta charset="UTF-8">
         <title>RK3568 boot · 书</title>
@@ -14,6 +14,14 @@
     <link rel="stylesheet" href="../gitbook/style.css">
 
     
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-chollapse/plugin.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/honkit-plugin-katex/katex.min.css">
+                
             
                 
                 <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-highlight/website.css">
@@ -93,7 +101,7 @@
                 <a href="../">
             
                     
-                    Introduction
+                    介绍
             
                 </a>
             
@@ -223,7 +231,7 @@
 <h2 id="rk3568-u-boot">RK3568 u-boot</h2>
 <p>u-boot使用CONFIG_BOOTCOMMAND，启动时会做设备检测,检测顺序为Android格式固件、RK FIT(Flat Image Tree)格式固件、RKP格式固件和文件系统格式固件。</p>
 <pre><code class="lang-c"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> RKIMG_BOOTCOMMAND            \
-    <span class="hljs-meta-string">"boot_android ${devtype} ${devnum};"</span>    \
+    <span class="hljs-meta-string">"boot_android {% math_inline %}{devtype} {% endmath_inline %}{devnum};"</span>    \
     <span class="hljs-meta-string">"boot_fit;"</span>                \
     <span class="hljs-meta-string">"bootrkp;"</span>                \
     <span class="hljs-meta-string">"run distro_bootcmd;"</span></span>
@@ -260,29 +268,29 @@ uuid:rootfs=614e0000-0000-4b53-8000-1d28000054a9
 <p>使用mkfs.ext4生成image,其中包含了extboot/目录下的内容。</p>
 <p>上述过程在build.sh脚本里添加函数模块，自动生成。</p>
 <pre><code class="lang-shell">
-rm -rf ${EXTBOOT_DIR} &amp;&amp; mkdir -p ${EXTBOOT_DIR}/extlinux
+rm -rf {% math_inline %}{EXTBOOT_DIR} &amp;&amp; mkdir -p {% endmath_inline %}{EXTBOOT_DIR}/extlinux
 
-KERNEL_VERSION=$(cat $TOP_DIR/kernel/include/config/kernel.release)
-echo "label rk-kernel.dtb linux-$KERNEL_VERSION" &gt; $EXTBOOT_DIR/extlinux/extlinux.conf
+KERNEL_VERSION={% math_inline %}(cat {% endmath_inline %}TOP_DIR/kernel/include/config/kernel.release)
+echo "label rk-kernel.dtb linux-{% math_inline %}KERNEL_VERSION" &gt; {% endmath_inline %}EXTBOOT_DIR/extlinux/extlinux.conf
 
-cp ${TOP_DIR}/$RK_KERNEL_IMG $EXTBOOT_DIR/Image-$KERNEL_VERSION
-echo -e "\tkernel /Image-$KERNEL_VERSION" &gt;&gt; $EXTBOOT_DIR/extlinux/extlinux.conf
+cp {% math_inline %}{TOP_DIR}/{% endmath_inline %}RK_KERNEL_IMG {% math_inline %}EXTBOOT_DIR/Image-{% endmath_inline %}KERNEL_VERSION
+echo -e "\tkernel /Image-{% math_inline %}KERNEL_VERSION" &gt;&gt; {% endmath_inline %}EXTBOOT_DIR/extlinux/extlinux.conf
 
-cp ${TOP_DIR}/kernel/arch/${RK_ARCH}/boot/dts/rockchip/${RK_KERNEL_DTS}.dtb $EXTBOOT_DIR
+cp {% math_inline %}{TOP_DIR}/kernel/arch/{% endmath_inline %}{RK_ARCH}/boot/dts/rockchip/{% math_inline %}{RK_KERNEL_DTS}.dtb {% endmath_inline %}EXTBOOT_DIR
 
-ln -sf ${RK_KERNEL_DTS}.dtb $EXTBOOT_DIR/rk-kernel.dtb
+ln -sf {% math_inline %}{RK_KERNEL_DTS}.dtb {% endmath_inline %}EXTBOOT_DIR/rk-kernel.dtb
 
-echo -e "\tfdt /rk-kernel.dtb" &gt;&gt; $EXTBOOT_DIR/extlinux/extlinux.conf
+echo -e "\tfdt /rk-kernel.dtb" &gt;&gt; {% math_inline %}EXTBOOT_DIR/extlinux/extlinux.conf
 
-cp ${TOP_DIR}/kernel/.config $EXTBOOT_DIR/config-$KERNEL_VERSION
-cp ${TOP_DIR}/kernel/System.map $EXTBOOT_DIR/System.map-$KERNEL_VERSION
+cp {% endmath_inline %}{TOP_DIR}/kernel/.config {% math_inline %}EXTBOOT_DIR/config-{% endmath_inline %}KERNEL_VERSION
+cp {% math_inline %}{TOP_DIR}/kernel/System.map {% endmath_inline %}EXTBOOT_DIR/System.map-{% math_inline %}KERNEL_VERSION
 
-make ARCH=$RK_ARCH INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$EXTBOOT_DIR modules_install
+make ARCH={% endmath_inline %}RK_ARCH INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH={% math_inline %}EXTBOOT_DIR modules_install
 
 EXTBOOT_IMG_SIZE=128M
 
-rm -rf $EXTBOOT_IMG &amp;&amp; truncate -s $EXTBOOT_IMG_SIZE $EXTBOOT_IMG
-fakeroot ${TOP_DIR}/device/rockchip/common/mkfs.ext4 -Fq -L "boot" -d $EXTBOOT_DIR $EXTBOOT_IMG
+rm -rf {% endmath_inline %}EXTBOOT_IMG &amp;&amp; truncate -s {% math_inline %}EXTBOOT_IMG_SIZE {% endmath_inline %}EXTBOOT_IMG
+fakeroot {% math_inline %}{TOP_DIR}/device/rockchip/common/mkfs.ext4 -Fq -L "boot" -d {% endmath_inline %}EXTBOOT_DIR $EXTBOOT_IMG
 </code></pre>
 <p>将生成的extboot.img作为新的boot.img打包进update.img</p>
 <h2 id="下载测试">下载测试</h2>
@@ -390,7 +398,7 @@ Starting kernel ...
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"RK3568 boot","level":"1.3.1","depth":2,"next":{"title":"libsrt","level":"1.3.2","depth":2,"path":"tech-notes/libsrt.md","ref":"tech-notes/libsrt.md","articles":[]},"previous":{"title":"tech notes","level":"1.3","depth":1,"path":"tech-notes/README.md","ref":"tech-notes/README.md","articles":[{"title":"RK3568 boot","level":"1.3.1","depth":2,"path":"tech-notes/rk3568_boot.md","ref":"tech-notes/rk3568_boot.md","articles":[]},{"title":"libsrt","level":"1.3.2","depth":2,"path":"tech-notes/libsrt.md","ref":"tech-notes/libsrt.md","articles":[]},{"title":"GIO socket programming","level":"1.3.3","depth":2,"path":"tech-notes/gio_http.md","ref":"tech-notes/gio_http.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":[],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","author":"yango","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"书","language":"zh_cn","gitbook":"*"},"file":{"path":"tech-notes/rk3568_boot.md","mtime":"2024-09-07T08:38:01.709Z","type":"markdown"},"gitbook":{"version":"4.0.8","time":"2024-09-07T09:37:18.960Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"RK3568 boot","level":"1.3.1","depth":2,"next":{"title":"libsrt","level":"1.3.2","depth":2,"path":"tech-notes/libsrt.md","ref":"tech-notes/libsrt.md","articles":[]},"previous":{"title":"tech notes","level":"1.3","depth":1,"path":"tech-notes/README.md","ref":"tech-notes/README.md","articles":[{"title":"RK3568 boot","level":"1.3.1","depth":2,"path":"tech-notes/rk3568_boot.md","ref":"tech-notes/rk3568_boot.md","articles":[]},{"title":"libsrt","level":"1.3.2","depth":2,"path":"tech-notes/libsrt.md","ref":"tech-notes/libsrt.md","articles":[]},{"title":"GIO socket programming","level":"1.3.3","depth":2,"path":"tech-notes/gio_http.md","ref":"tech-notes/gio_http.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":["chollapse","katex","livereload"],"root":"./","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"chollapse":{},"katex":{},"livereload":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","author":"yango","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"书","gitbook":"*"},"file":{"path":"tech-notes/rk3568_boot.md","mtime":"2024-09-07T14:10:43.117Z","type":"markdown"},"gitbook":{"version":"4.0.8","time":"2024-09-07T14:38:50.070Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
@@ -442,6 +450,14 @@ Starting kernel ...
     </script>
     <script src="../gitbook/gitbook.js"></script>
     <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-chollapse/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-livereload/plugin.js"></script>
+        
     
         
         <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
