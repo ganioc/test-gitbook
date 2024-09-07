@@ -3,7 +3,7 @@
 <html lang="" >
     <head>
         <meta charset="UTF-8">
-        <title>Introduction · HonKit</title>
+        <title>libsrt · HonKit</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="HonKit 4.0.8">
@@ -56,8 +56,10 @@
     <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="rk3568_boot.html" />
+    <link rel="next" href="gio_http.html" />
     
+    
+    <link rel="prev" href="rk3568_boot.html" />
     
 
     </head>
@@ -86,7 +88,7 @@
         
         
     
-        <li class="chapter active" data-level="1.1" data-path="./">
+        <li class="chapter " data-level="1.1" data-path="./">
             
                 <a href="./">
             
@@ -112,7 +114,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.3" data-path="libsrt.html">
+        <li class="chapter active" data-level="1.3" data-path="libsrt.html">
             
                 <a href="libsrt.html">
             
@@ -168,7 +170,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Introduction</a>
+        <a href="." >libsrt</a>
     </h1>
 </div>
 
@@ -183,8 +185,92 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="introduction">Introduction</h1>
-<p>This is a test book.</p>
+                                <h2 id="what-is-libsrt">What is libsrt?</h2>
+<h2 id="problem-facing">Problem facing</h2>
+<p>Gstreamer 1.14.4 doesnt support streamid property in its srtserversink plugin.</p>
+<h3 id="libsrt-way-of-handling-streamid">libsrt way of handling streamid</h3>
+<p>It seems to pass it to srt_setsockopt() function.</p>
+<p>SRT doesn't do URI parsing at all, only describe the socket option, doesn't mention the URI.</p>
+<p>It is a valid case to set a socket option of string type to a string value containing printable character. It is a valid case to call srt_setsockflag (or srt_setsockopt) function using SRT_STREAMID, as well as extract this option's value from the socket.</p>
+<p>The srt socket option, </p>
+<p>srt-live-transmit application,</p>
+<p>socket-groups.md,</p>
+<p>srt-test-multiplex,</p>
+<p>GStreamer application is using a different approach, </p>
+<pre><code class="lang-shell">srtserversink uri=srt://xx.xx.xx.xx:8080 latency=100
+</code></pre>
+<p>VLC and FFMPEG both support the use case, support setting streamid by option. </p>
+<h3 id="srt-api-socket-options">SRT API Socket Options</h3>
+<p>Support int32, int64, bool, string, linger,</p>
+<p>SRT C API srt.h, is based on the legacy UDT API,</p>
+<p>srt-live-transmit, srt-file-transmit,</p>
+<ol>
+<li>setup and teardown,
+srt_startup(),
+srt-cleanup(),</li>
+<li>Creating and Destroying a Socket,
+SRT socket, 
+srt_create_socket(),
+srt_close(STRSocket s)
+Use UDP socket underlying, </li>
+<li>Binding and Connecting
+srt_bind(SRTSOCKET u, struct sockaddr* name, int namelen)
+srt_bind_acquire(SRTSOCKET u, UDPSOCKET updsock)
+srt_listen()
+srt_accept()
+srt_connect()
+srt_connect_debug()</li>
+<li>Rendezvous 
+SRTO_RENDEZVOUS flag, connect to rendezvous counterpart
+lsa, local ip/port,
+rsa, remote ip/port,
+srt_setsockopt(m_sock,0,SRTO_RENDEZVOUS, &amp;yes, sizeof yes)
+srt_bind()
+srt_connect()
+HandleConnection(sock)</li>
+<li>Sending and receiving,
+srt_send(),
+srt_recv(),
+srt_sendmsg(),
+srt_recvmsg(),</li>
+<li>srt epoll
+srt_epoll_wait()
+srt_epoll_uwait()</li>
+</ol>
+<h3 id="some-interesting-points-from-haivision-github-repo">Some interesting points from Haivision github repo</h3>
+<pre><code>Accept URIs with standard encoding - in this case, e.g. 
+srt://example.com:9000?streamid=%23%21%3A%3Au=admin,r=foo [EDIT: fixed]
+</code></pre><h3 id="srt-source-code-version-1144">srt source code, version 1.14.4</h3>
+<p><a href="https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad/-/tree/1.14.4" target="_blank">https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad/-/tree/1.14.4</a></p>
+<p>gstsrtclientsink.c</p>
+<ul>
+<li>gst_srt_client_sink_set_property()<ul>
+<li>priv-&gt;poll_timeout</li>
+<li>priv-&gt;bind_address</li>
+<li></li>
+</ul>
+</li>
+<li>gst_srt_client_sink_start<ul>
+<li>gst_srt_client_connect_full</li>
+</ul>
+</li>
+</ul>
+<h3 id="srt-source-code-version-119">srt source code, version 1.19</h3>
+<p>srt_params</p>
+<p>srt_options[]</p>
+<pre><code class="lang-shell">gst_srt_object_set_common_params()
+    call srt_setsockopt()
+    gst_srt_object_apply_socket_option()
+        call function below, 
+        srt_setsockopt()
+
+gst_srt_object_set_socket_option()
+    gst_srt_object_set_string_value()
+</code></pre>
+<h3 id="how-to-change-the-plugin-code">How to change the plugin code?</h3>
+<h3 id="materials">Materials</h3>
+<p>SRT and RIST are recent streaming protocols, a growing list of alternatives to RTMP( among wich one can find webrtc, warp/quit etc.)</p>
+<p>SRT can recover from packet loss up to range of 15%, RIST up to 50% packet loss. </p>
 
                                 
                                 </section>
@@ -212,8 +298,12 @@
 
             
                 
+                <a href="rk3568_boot.html" class="navigation navigation-prev " aria-label="Previous page: RK3568 boot">
+                    <i class="fa fa-angle-left"></i>
+                </a>
                 
-                <a href="rk3568_boot.html" class="navigation navigation-next navigation-unique" aria-label="Next page: RK3568 boot">
+                
+                <a href="gio_http.html" class="navigation navigation-next " aria-label="Next page: GIO socket programming">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -224,7 +314,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"RK3568 boot","level":"1.2","depth":1,"path":"rk3568_boot.md","ref":"rk3568_boot.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2023-08-20T13:43:16.759Z","type":"markdown"},"gitbook":{"version":"4.0.8","time":"2024-09-07T08:10:51.484Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"libsrt","level":"1.3","depth":1,"next":{"title":"GIO socket programming","level":"1.4","depth":1,"path":"gio_http.md","ref":"gio_http.md","articles":[]},"previous":{"title":"RK3568 boot","level":"1.2","depth":1,"path":"rk3568_boot.md","ref":"rk3568_boot.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"libsrt.md","mtime":"2024-09-06T14:41:57.615Z","type":"markdown"},"gitbook":{"version":"4.0.8","time":"2024-09-07T08:10:51.484Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
