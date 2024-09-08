@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "ebook-convert": "^2.0.1",
     "gitbook-plugin-chollapse": "^1.0.1",
     "honkit": "^4.0.8",
     "honkit-plugin-katex": "^1.1.7"
